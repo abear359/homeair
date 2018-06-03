@@ -1,5 +1,5 @@
 # Overview
-Using an Arduino (ATMEGA micropocessor) an SDS011, a DHT22, and a OLED screen, get and display data.
+Collect and print pollution data (small particulate matter) using Arduino, SDS011, DHT22 and an OLED 128x32 screen.
 
 ## What Is Arduino
 Arduino is a microprocessor that is great at small tasks. Please refere to the website arduino.cc
