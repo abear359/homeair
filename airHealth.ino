@@ -31,8 +31,8 @@ DHT dht(DHTPIN, DHTTYPE);
 static SDS011 my_sds;
 
 // #define DHTPIN 2 
-const uint8_t my_rx = 13;
-const uint8_t my_tx = 12;
+const uint8_t my_rx = 12;
+const uint8_t my_tx = 11;
 const int buttonPin = 3;
 
 const int xpos = (display.width() - 32);
@@ -220,7 +220,7 @@ int displayPMData(){
     resetDisplay(4);
     
     if (pmError == 0){
-      
+        resetDisplay(4);      
         initChartPM25();
         pm25AQI = getIndex(p25);
         
@@ -247,6 +247,7 @@ int displayPMData(){
           display.drawBitmap(xpos, ypos, VERY_VERY_BAD, square, square, WHITE);
         }
    }else{
+        resetDisplay(2);
         display.print(F("No Data"));
    }
 
@@ -318,6 +319,8 @@ void setup() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   dht.begin();
   pinMode(buttonPin, INPUT);
+  pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);
   
   for( int i = 30; i > 0; i--){
     resetDisplay();
