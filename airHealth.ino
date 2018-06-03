@@ -1,25 +1,9 @@
 
 #include <DHT.h>
-// #include <DHT_U.h>
-#define DHTPIN 2 
-#define DHTTYPE DHT22 
-
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-
-#define LOGO16_GLCD_HEIGHT 16 
-#define LOGO16_GLCD_WIDTH  16 
-
-#define OLED_RESET 4
-Adafruit_SSD1306 display(OLED_RESET);
-DHT dht(DHTPIN, DHTTYPE)
-
-#if (SSD1306_LCDHEIGHT != 32)
-#error("Height incorrect, please fix Adafruit_SSD1306.h!");
-#endif
-
 #include <SDS011.h>
 #include "GREAT.h"
 #include "MEDIUM.h"
@@ -28,15 +12,44 @@ DHT dht(DHTPIN, DHTTYPE)
 #include "VERY_VERY_BAD.h"
 #include "airHealth.h"
 
-//#define DEBUG_TRUE
+#define DHTPIN 2 
+#define DHTTYPE DHT22 
+#define LOGO16_GLCD_HEIGHT 16 
+#define LOGO16_GLCD_WIDTH  16 
+#define OLED_RESET 4
+
+Adafruit_SSD1306 display(OLED_RESET);
+DHT dht(DHTPIN, DHTTYPE);
+
+#if (SSD1306_LCDHEIGHT != 32)
+#error("Height incorrect, please fix Adafruit_SSD1306.h!");
+#endif
+
+
+////////// GLOBAL VARIABLES ////////////
 
 static SDS011 my_sds;
+
+// #define DHTPIN 2 
 const uint8_t my_rx = 13;
 const uint8_t my_tx = 12;
+const int buttonPin = 3;
+
 const int xpos = (display.width() - 32);
 const int ypos = 0;
-    
-void reset_display(int dsize= 2){
+
+static float temp = 0.0, humid = 0.0;
+static float p10 = 0.0 , p25 = 0.0;
+
+static int sdsStatus = 0; // 1 means asleep 0 means awake
+static unsigned long lastTempUpdate = 0;
+static unsigned long lastPMUpdate = 0;
+int pmError = 0;
+
+const unsigned long tempUpdateInterval = 10000; // 10 seconds
+const unsigned long pmUpdateInterval = 240000; // 4 minutes
+
+void resetDisplay(int dsize= 2){
     display.clearDisplay();
     display.setTextSize(dsize);
     display.setTextColor(WHITE);
@@ -199,16 +212,14 @@ int getIndex(float pm25){
  * finally print commma seperated data to serial
  * output
  */
-int display_data(){
-    float p10, p25;
+int displayPMData(){
+  
     int pm10AQI, pm25AQI, myAQI;
-    int error = 0;
     int square = 32;
-
-    error = my_sds.read(&p25, &p10); 
-    reset_display(4);
+     
+    resetDisplay(4);
     
-    if (error == 0){
+    if (pmError == 0){
       
         initChartPM25();
         pm25AQI = getIndex(p25);
@@ -251,7 +262,49 @@ int display_data(){
     Serial.print(F(","));
     Serial.println(myAQI);
 
-    return error;
+    return pmError;
+}
+
+int displayTempData(){
+     
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(0,0);
+
+    if (isnan(humid) || isnan(temp)) {
+      display.print("No Temp");
+      display.display();
+      return 1;
+    }
+  
+    display.print(int(temp));
+    display.println(F(" C Temp"));
+    display.print(int(humid));
+    display.print(F(" % Humid"));
+
+    display.display();
+    
+    return 0;
+}
+
+int readTempData(){
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  humid = dht.readHumidity();
+  temp = dht.readTemperature();
+
+  if (isnan(humid) || isnan(temp)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return 1;
+  }else{
+    return 0;
+  }
+} 
+
+int readPMData(){
+  pmError = my_sds.read(&p25, &p10);
+  return pmError;
 }
 
 void setup() {
@@ -263,9 +316,11 @@ void setup() {
   Serial.print(F("PM25,PM25AQI,PM10,PM10AQI,MYAQI"));
   // initialize with the I2C addr 0x3C (for the 128x32)
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  dht.begin();
+  pinMode(buttonPin, INPUT);
   
   for( int i = 30; i > 0; i--){
-    reset_display();
+    resetDisplay();
     display.println(F("Data in"));
     display.print(i);
     display.println(F(" seconds"));
@@ -273,16 +328,43 @@ void setup() {
     delay(1000); 
   }
 
+  readTempData();
+  pmError = readPMData();
+  displayPMData();
+  my_sds.sleep();
+  sdsStatus = 1;
+  
 }
 
+
 void loop() {
-    display_data();
-    my_sds.sleep();
-    // Serial.println(F("sleeping 4 minutes"));
-    delay(240000);
-    // Serial.println(F("waking up"));
-    my_sds.wakeup();
-    delay(60000);
+
+    if(digitalRead(buttonPin) == HIGH){
+        displayTempData();
+        delay(3000);
+        displayPMData();
+    }
+
+    unsigned long currentMillis = millis();
+    
+    if(currentMillis - lastTempUpdate > tempUpdateInterval){
+        readTempData();
+        lastTempUpdate = currentMillis;
+    }
+
+    if(currentMillis - lastPMUpdate > pmUpdateInterval && sdsStatus == 1){
+        my_sds.wakeup();
+        sdsStatus = 0;
+    }
+
+    if(currentMillis - lastPMUpdate > (pmUpdateInterval + 60000) && sdsStatus == 0){
+        pmError = readPMData();
+        displayPMData();
+        lastPMUpdate = currentMillis;
+        my_sds.sleep();
+        sdsStatus = 1;
+    }
+
 }
 
 
