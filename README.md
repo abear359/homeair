@@ -1,5 +1,8 @@
 # Overview
-Using an SDS011, a DHT22, and a OLED screen, get and display data.
+Using an Arduino (ATMEGA micropocessor) an SDS011, a DHT22, and a OLED screen, get and display data.
+
+## What Is Arduino
+Arduino is a microprocessor that is great at small tasks. Please refere to the website arduino.cc
 
 ## What Is SDS011
 SDS011 is an inexpensive particle matter sensor (lazer based) that senses pm 2.5 and PM 10 particles. It is sold by inovafitness based in China.
