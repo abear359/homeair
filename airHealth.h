@@ -30,10 +30,9 @@ struct chart {
     aqi error;
 };
 
-static int initChartBitMaps();
-static int initChartPM10();
-static int initChartPM25();
-int getIndex(float pm25);
+static void initChartPM10();
+static void initChartPM25();
+static int getIndex(float pm25);
 
 
 

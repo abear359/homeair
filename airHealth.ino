@@ -31,12 +31,12 @@ DHT dht(DHTPIN, DHTTYPE);
 static SDS011 my_sds;
 
 // #define DHTPIN 2 
-const uint8_t my_rx = 12;
-const uint8_t my_tx = 11;
-const int buttonPin = 3;
+static const uint8_t my_rx = 12;
+static const uint8_t my_tx = 11;
+static const int buttonPin = 3;
 
-const int xpos = (display.width() - 32);
-const int ypos = 0;
+static const int xpos = (display.width() - 32);
+static const int ypos = 0;
 
 static float temp = 0.0, humid = 0.0;
 static float p10 = 0.0 , p25 = 0.0;
@@ -44,12 +44,12 @@ static float p10 = 0.0 , p25 = 0.0;
 static int sdsStatus = 0; // 1 means asleep 0 means awake
 static unsigned long lastTempUpdate = 0;
 static unsigned long lastPMUpdate = 0;
-int pmError = 0;
+static int pmError = 0;
 
-const unsigned long tempUpdateInterval = 10000; // 10 seconds
-const unsigned long pmUpdateInterval = 240000; // 4 minutes
+static const unsigned long tempUpdateInterval = 10000; // 10 seconds
+static const unsigned long pmUpdateInterval = 240000; // 4 minutes
 
-void resetDisplay(int dsize= 2){
+static void resetDisplay(int dsize= 2){
     display.clearDisplay();
     display.setTextSize(dsize);
     display.setTextColor(WHITE);
@@ -62,7 +62,7 @@ void resetDisplay(int dsize= 2){
  */
 static chart aqiv;
 
-static int initChartPM10(){
+static void initChartPM10(){
     /*Set the values for the PM 10 breakpoints
       and the corresponding index level */
     aqiv.good.bpL = 0.0;
@@ -104,11 +104,10 @@ static int initChartPM10(){
     aqiv.error.bpH = -2.0;
     aqiv.error.iL = 1.0;
     aqiv.error.iH = -2.0;
-    
-    return 0;
+
 }
 
-static int initChartPM25(){
+static void initChartPM25(){
     /*Set the values for the PM 25 breakpoints
     and the corresponding index level */
     
@@ -151,11 +150,10 @@ static int initChartPM25(){
     aqiv.error.bpH = -2.0;
     aqiv.error.iL = 1.0;
     aqiv.error.iH = -2.0;
-        
-    return 0;
+
 }
 
-int getIndex(float pm25){
+static int getIndex(float pm25){
   /* Calculate the Air Quality Index Value for 
    *  a given concentration (milligrams per cubic microgram)
    *  Be sure to to set the variable aqiv to the correct
@@ -212,7 +210,7 @@ int getIndex(float pm25){
  * finally print commma seperated data to serial
  * output
  */
-int displayPMData(){
+static void displayPMData(){
   
     int pm10AQI, pm25AQI, myAQI;
     int square = 32;
@@ -263,10 +261,9 @@ int displayPMData(){
     Serial.print(F(","));
     Serial.println(myAQI);
 
-    return pmError;
 }
 
-int displayTempData(){
+static int displayTempData(){
      
     display.clearDisplay();
     display.setTextSize(2);
@@ -274,36 +271,32 @@ int displayTempData(){
     display.setCursor(0,0);
 
     if (isnan(humid) || isnan(temp)) {
-      display.print("No Temp");
-      display.display();
-      return 1;
-    }
+        display.print(F("No Temp Data"));
+    }else{
   
-    display.print(int(temp));
-    display.println(F(" C Temp"));
-    display.print(int(humid));
-    display.print(F(" % Humid"));
-
+        display.print(int(temp));
+        display.println(F(" C Temp"));
+        display.print(int(humid));
+        display.print(F(" % Humid"));
+    }
     display.display();
-    
-    return 0;
 }
 
-int readTempData(){
+static int readTempData(){
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   humid = dht.readHumidity();
   temp = dht.readTemperature();
 
   if (isnan(humid) || isnan(temp)) {
-    Serial.println("Failed to read from DHT sensor!");
+    Serial.println(F("Failed to read from DHT sensor!"));
     return 1;
   }else{
     return 0;
   }
 } 
 
-int readPMData(){
+static int readPMData(){
   pmError = my_sds.read(&p25, &p10);
   return pmError;
 }
@@ -349,17 +342,17 @@ void loop() {
     }
 
     unsigned long currentMillis = millis();
-    
+    // Get the tempurature data
     if(currentMillis - lastTempUpdate > tempUpdateInterval){
         readTempData();
         lastTempUpdate = currentMillis;
     }
-
+    // After 4 minutes turn on the SDS011
     if(currentMillis - lastPMUpdate > pmUpdateInterval && sdsStatus == 1){
         my_sds.wakeup();
         sdsStatus = 0;
     }
-
+    // After 5 minutes, get the air pollution levels
     if(currentMillis - lastPMUpdate > (pmUpdateInterval + 60000) && sdsStatus == 0){
         pmError = readPMData();
         displayPMData();
