@@ -17,6 +17,8 @@
 #define LOGO16_GLCD_HEIGHT 16 
 #define LOGO16_GLCD_WIDTH  16 
 #define OLED_RESET 4
+#define SLEEP 1
+#define AWAKE 0
 
 Adafruit_SSD1306 display(OLED_RESET);
 DHT dht(DHTPIN, DHTTYPE);
@@ -41,7 +43,7 @@ static const int ypos = 0;
 static float temp = 0.0, humid = 0.0;
 static float p10 = 0.0 , p25 = 0.0;
 
-static int sdsStatus = 0; // 1 means asleep 0 means awake
+static int sdsStatus = AWAKE; // 1 means asleep 0 means awake
 static unsigned long lastTempUpdate = 0;
 static unsigned long lastPMUpdate = 0;
 static int pmError = 0;
@@ -236,11 +238,11 @@ static void displayPMData(){
         if( myAQI < 50 ){
           display.drawBitmap(xpos, ypos, GREAT, square, square, WHITE);
         }else if (myAQI < 100){
-          display.drawBitmap(xpos, ypos, MEDIUM, square, square, WHITE);  
+          display.drawBitmap(xpos, ypos, BAD, square, square, WHITE);  
         }else if (myAQI < 150){
-          display.drawBitmap(xpos, ypos, BAD, square, square, WHITE);        
+          display.drawBitmap(xpos, ypos, VERY_BAD, square, square, WHITE);        
         }else if (myAQI < 200){
-          display.drawBitmap(xpos, ypos, VERY_BAD, square, square, WHITE);         
+          display.drawBitmap(xpos, ypos, VERY_VERY_BAD, square, square, WHITE);         
         }else{
           display.drawBitmap(xpos, ypos, VERY_VERY_BAD, square, square, WHITE);
         }
@@ -328,7 +330,7 @@ void setup() {
   pmError = readPMData();
   displayPMData();
   my_sds.sleep();
-  sdsStatus = 1;
+  sdsStatus = SLEEP;
   
 }
 
@@ -348,17 +350,17 @@ void loop() {
         lastTempUpdate = currentMillis;
     }
     // After 4 minutes turn on the SDS011
-    if(currentMillis - lastPMUpdate > pmUpdateInterval && sdsStatus == 1){
+    if(currentMillis - lastPMUpdate > pmUpdateInterval && sdsStatus == SLEEP){
         my_sds.wakeup();
-        sdsStatus = 0;
+        sdsStatus = AWAKE;
     }
     // After 5 minutes, get the air pollution levels
-    if(currentMillis - lastPMUpdate > (pmUpdateInterval + 60000) && sdsStatus == 0){
+    if(currentMillis - lastPMUpdate > (pmUpdateInterval + 60000) && sdsStatus == AWAKE){
         pmError = readPMData();
         displayPMData();
         lastPMUpdate = currentMillis;
         my_sds.sleep();
-        sdsStatus = 1;
+        sdsStatus = SLEEP;
     }
 
 }
