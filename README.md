@@ -20,4 +20,4 @@ OLED screen is a 128 by 32 pixel organic light emmitting diode screen. It's very
 Nothing. Maybe this code might be useful for someone.
 
 ## Notes / What I learned
-If you are making an air monitor, the SDS011 performs well. It measures PM 10 and PM 2.5 well (a good review can be found on https://aqicn.org/). I recommend using a NodeMCU instead of an arduino. If you don't need a graphical display and only want to update data to a server, then you can easily use only an ESP-01 and an SDS011, they will work well together and be very affordable. 
+If you are making an air monitor, the SDS011 performs well. It measures PM 10 and PM 2.5 well (a good review can be found on https://aqicn.org/). I recommend using a NodeMCU instead of an arduino. A NodeMCU can do all the work of displaying data and updating a server. Alternatively, If you don't need a graphical display and only want to update data to a server, then you can easily use only an ESP-01 and an SDS011, they will work well together and be very affordable. 
