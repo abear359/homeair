@@ -2,7 +2,7 @@
 Collect and print pollution data (small particulate matter) using Arduino, ESP-01 (ESP8266), SDS011, DHT22 and an OLED 128x32 screen.
 
 ## What Is Arduino
-Arduino is a microcontroller that is great at small tasks. Please refere to the website arduino.cc
+Arduino is a microcontroller that is great at small tasks. Please refer to the website arduino.cc
 
 ## What is an ESP-01
 ESP-01 is a wifi module for Arduino, It was first released as an add on wifi module. Then the manufacturer released documentation for it and source code, since then you are able to find many more versions of ESP-01 all with the base architecure of ESP8266. The most modern version of ESP-01 is known as the node mcu. 
