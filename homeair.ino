@@ -153,8 +153,10 @@ void loop() {
 
 	// Get the tempurature data
 	if(currentMillis - lastTempUpdate > tempUpdateInterval){	
-		if(readTempSensor(myData) == ERROR){
-			viewType = AirView::views::errorTempSensor;
+		if(readTempSensor(myData) == ERROR && viewType == AirView::views::temperature){
+			AirView::show(myData, AirView::views::errorTempSensor);
+		}else if( viewType ==  AirView::views::temperature){
+			AirView::show(myData, viewType);
 		}
 		lastTempUpdate = currentMillis;
 	}
@@ -169,9 +171,17 @@ void loop() {
 	if(currentMillis - lastPMUpdate > (pmUpdateInterval + 60000) && airSensorStatus == AWAKE){
 
 		if(readAirSensor(myData) == ERROR){
-			viewType = AirView::views::errorAirSensor;
+			if(	viewType == AirView::views::rawPM25 || 
+				viewType == AirView::views::rawPM10 || 
+				viewType == AirView::views::aqiTop){
+					AirView::show(myData, AirView::views::errorAirSensor);
+			}else{
+				AirView::show(myData, viewType);
+			}
+		}else{
+			AirView::show(myData, viewType);
 		}
-		AirView::show(myData, viewType);
+
 		SendHomeAirData::send(myData, &Serial);
 		lastPMUpdate = currentMillis;
 		airSensor.sleep();
